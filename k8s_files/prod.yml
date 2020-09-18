@@ -1,0 +1,64 @@
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: shelkov-deployment
+  labels:
+    app: shelkov
+  namespace: prod
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: shelkov
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: shelkov
+    spec:
+      containers:
+      - name: shelkov
+        image: IMAGE_NAME
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: shelkov
+  name: shelkov-service
+  namespace: prod
+spec:
+  ports:
+  - port: 8080
+    protocol: TCP
+    targetPort: 8080
+  selector:
+    app: shelkov
+
+---
+
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: shelkov-ingress
+  namespace: prod
+spec:
+  tls:
+    - hosts:
+      - shelkov.xc.by
+      secretName: prod-tls-secret
+  rules:
+    - host: shelkov.xc.by
+      http:
+        paths:
+        - path: /test
+          backend:
+            serviceName: shelkov-service
+            servicePort: 8080
+
